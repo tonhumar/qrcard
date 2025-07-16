@@ -7,17 +7,9 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.1/build/qrcode.min.js"></script>
   <style>
-    body.dark {
-      background-color: #1f2937;
-      color: white;
-    }
-    .dark input, .dark select {
-      background-color: #374151;
-      color: white;
-    }
-    .dark .bg-white {
-      background-color: #1e293b;
-    }
+    body.dark { background-color: #1f2937; color: white; }
+    .dark input, .dark select { background-color: #374151; color: white; }
+    .dark .bg-white { background-color: #1e293b; }
     .toggle-checkbox:checked + .toggle-label .dot {
       transform: translateX(100%);
       background-color: white;
@@ -58,7 +50,6 @@
         <input id="title" type="text" class="w-full border rounded px-4 py-2" placeholder="Chức danh" />
         <input id="companyWebsite" type="url" class="w-full border rounded px-4 py-2" placeholder="Website công ty (nếu có)" />
         <input id="companyAddress" type="text" class="w-full border rounded px-4 py-2" placeholder="Địa chỉ công ty (nếu có)" />
-
         <div>
           <label class="block text-sm mb-1">Logo (hiển thị giữa mã QR)</label>
           <input id="logoInput" type="file" accept="image/*" class="w-full border rounded px-2 py-1" />
@@ -110,14 +101,14 @@
       const companyAddress = document.getElementById("companyAddress").value.trim();
       const qrColor = document.getElementById("qrColor").value;
 
-      if (!fullName || !email || !phone) return;
+      if (![fullName, email, phone, title, company, website, companyWebsite, companyAddress].some(Boolean)) return;
 
       const vCard = [
         "BEGIN:VCARD",
         "VERSION:3.0",
-        `FN:${fullName}`,
-        `EMAIL:${email}`,
-        `TEL;TYPE=CELL:${phone}`,
+        fullName && `FN:${fullName}`,
+        email && `EMAIL:${email}`,
+        phone && `TEL;TYPE=CELL:${phone}`,
         title && `TITLE:${title}`,
         company && `ORG:${company}`,
         website && `URL:${website}`,
@@ -161,6 +152,25 @@
       link.href = image;
       link.download = "qr-code.png";
       link.click();
+
+      // Gửi dữ liệu về Google Sheet qua SheetDB
+      fetch("https://sheetdb.io/api/v1/0gecc2algfvag", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          data: {
+            fullName: document.getElementById("fullName").value.trim(),
+            email: document.getElementById("email").value.trim(),
+            phone: document.getElementById("phone").value.trim(),
+            title: document.getElementById("title").value.trim(),
+            company: document.getElementById("company").value.trim(),
+            website: document.getElementById("website").value.trim(),
+            companyWebsite: document.getElementById("companyWebsite").value.trim(),
+            companyAddress: document.getElementById("companyAddress").value.trim(),
+            timestamp: new Date().toISOString()
+          }
+        })
+      });
     });
 
     window.onload = generateQR;
